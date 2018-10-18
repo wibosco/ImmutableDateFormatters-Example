@@ -83,62 +83,116 @@ class DateConverterTests: XCTestCase {
 
 DateConverterTests.defaultTestSuite.run()
 
-/*-------- Date Formatter Helper ---------*/
+/*-------- Pass-by-reference Vs Pass-by-value ---------*/
 
-class DateFormatterHelper {
+struct ExamplePassByValue {
+    var name: String
+}
+
+let exampleA = ExamplePassByValue(name: "Bob")
+var exampleB = exampleA
+exampleB.name = "Samantha"
+
+print("exampleA name: \(exampleA.name)") // prints "exampleA name: Bob"
+print("exampleB name: \(exampleB.name)") // prints "exampleA name: Samantha"
+
+class ExamplePassByReference {
+    var name: String
+    
+    init(name: String) {
+        self.name = name
+    }
+}
+
+let exampleC = ExamplePassByReference(name: "Bob")
+var exampleD = exampleC
+exampleD.name = "Samantha"
+
+print("exampleC name: \(exampleC.name)") // prints "exampleA name: Samantha"
+print("exampleD name: \(exampleD.name)") // prints "exampleA name: Samantha"
+
+/*-------- Singleton Date Formatter Helper ---------*/
+
+private protocol DateFormatterType {
+    func string(from date: Date) -> String
+}
+
+extension DateFormatter: DateFormatterType { }
+
+class DateFormatingHelper {
+    
+    // MARK: - Shared
+    
+    static let shared = DateFormatingHelper()
     
     // MARK: - Formatters
     
-    private static let numericalDayMonthYearFormatter: DateFormatter = {
+    private let dobDateFormatter: DateFormatterType = {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "d/M/yyyy"
+        dateFormatter.dateFormat = "YYYY/MM/dd @ HH:mm"
         
         return dateFormatter
     }()
     
-    private static let longMonthFormatter: DateFormatter = {
+    private let dayMonthTimeDateFormatter: DateFormatterType = {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
+        dateFormatter.dateFormat = "dd MMM @ HH:mm"
         
         return dateFormatter
     }()
     
-    private static let shortMonthWithTimeFormatter: DateFormatter = {
+    private let hourMinuteDateFormatter: DateFormatterType = {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy @ HH:mm"
+        dateFormatter.dateFormat = "HH:mm"
         
         return dateFormatter
     }()
     
-    // MARK: - User
+    private let dayMonthYearDateFormatter: DateFormatterType = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "d MMM 'of' yyyy"
+        
+        return dateFormatter
+    }()
     
-    static func string(forDOB date: Date) -> String {
-        let formatter = numericalDayMonthYearFormatter
-        return formatter.string(from: date)
+    // MARK: - DOB
+    
+    func formatDOBDate(_ date: Date) -> String {
+        let formattedDate = dobDateFormatter.string(from: date)
+        return ("Date of birth: \(formattedDate)")
     }
     
-    static func string(forAccountCreationDate date: Date) -> String {
-        let formatter = numericalDayMonthYearFormatter
-        return formatter.string(from: date)
+    // MARK: - Account
+    
+    func formatLastActiveDate(_ date: Date, now: Date = Date()) -> String {
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!
+        
+        var dateFormatter = dayMonthTimeDateFormatter
+        if date > yesterday {
+            dateFormatter = hourMinuteDateFormatter
+        }
+        
+        let formattedDate = dateFormatter.string(from: date)
+        return ("Last active: \(formattedDate)")
     }
     
     // MARK: - Post
     
-    static func string(forPostedDate date: Date) -> String {
-        let formatter = longMonthFormatter
-        return formatter.string(from: date)
+    func formatPostCreatedDate(_ date: Date) -> String {
+        let formattedDate = dayMonthYearDateFormatter.string(from: date)
+        return formattedDate
     }
     
-    // MARK: - Comment
+    // MARK: - Commenting
     
-    static func string(forCommentedDate date: Date) -> String {
-        let formatter = shortMonthWithTimeFormatter
-        return formatter.string(from: date)
+    func formatCommentedDate(_ date: Date) -> String {
+        let formattedDate = dayMonthTimeDateFormatter.string(from: date)
+        return ("Comment posted: \(formattedDate)")
     }
 }
 
 extension Date {
-    
+
     static func dateFrom(year: Int, month: Int,  day: Int, hour: Int = 0, minute: Int = 0, second: Int = 0) -> Date? {
         var components = DateComponents()
         components.year = year
@@ -148,215 +202,166 @@ extension Date {
         components.minute = minute
         components.second = second
         components.timeZone = Calendar.current.timeZone
-        
+
         return Calendar.current.date(from: components)
     }
 }
 
-class DateFormatterHelperTests: XCTestCase {
-    
-    func test_forDOB_converted() {
-        let date = Date.dateFrom(year: 1998, month: 8, day: 23)!
-        let formattedDate = DateFormatterHelper.string(forDOB: date)
-        
-        XCTAssertEqual(formattedDate, "23/8/1998")
+class DateFormatingHelperTests: XCTestCase {
+
+    func test_formatDOBDate_formatted() {
+        let dob = Date.dateFrom(year: 1992, month: 6, day: 23, hour: 4, minute: 56)!
+
+        let formattedDate = DateFormatingHelper.shared.formatDOBDate(dob)
+
+        XCTAssertEqual(formattedDate, "Date of birth: 1992/06/23 @ 04:56")
     }
-    
-    func test_forAccountCreationDate_converted() {
-        let date = Date.dateFrom(year: 2017, month: 11, day: 3)!
-        let formattedDate = DateFormatterHelper.string(forAccountCreationDate: date)
-        
-        XCTAssertEqual(formattedDate, "3/11/2017")
+
+    func test_formatLastActivityDate_yesterday() {
+        let now = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
+        let earlierToday = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 9, minute: 28)!
+
+        let formattedDate = DateFormatingHelper.shared.formatLastActiveDate(earlierToday, now: now)
+
+        XCTAssertEqual(formattedDate, "Last active: 09:28")
     }
-    
-    func test_forPostedDate_converted() {
-        let date = Date.dateFrom(year: 2018, month: 8, day: 18)!
-        let formattedDate = DateFormatterHelper.string(forPostedDate: date)
-        
-        XCTAssertEqual(formattedDate, "Aug 18, 2018")
+
+    func test_formatLastActivityDate_7DaysAgo() {
+        let now = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
+        let sevenDaysAgo = Date.dateFrom(year: 2018, month: 8, day: 11, hour: 9, minute: 28)!
+
+        let formattedDate = DateFormatingHelper.shared.formatLastActiveDate(sevenDaysAgo, now: now)
+
+        XCTAssertEqual(formattedDate, "Last active: 11 Aug @ 09:28")
     }
-    
-    func test_forCommentedDate_converted() {
-        let date = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
-        let formattedDate = DateFormatterHelper.string(forCommentedDate: date)
-        
-        XCTAssertEqual(formattedDate, "Aug 18, 2018 @ 14:56")
+
+    func test_formatPostCreatedDate_formatted() {
+        let postCreated = Date.dateFrom(year: 1992, month: 6, day: 23, hour: 17, minute: 6)!
+
+        let formattedDate = DateFormatingHelper.shared.formatPostCreatedDate(postCreated)
+
+        XCTAssertEqual(formattedDate, "23 Jun of 1992")
+    }
+
+    func test_formatCommentedDate_formatted() {
+        let commented = Date.dateFrom(year: 2018, month: 11, day: 9, hour: 4, minute: 56)!
+
+        let formattedDate = DateFormatingHelper.shared.formatCommentedDate(commented)
+
+        XCTAssertEqual(formattedDate, "Comment posted: 09 Nov @ 04:56")
     }
 }
 
-DateFormatterHelperTests.defaultTestSuite.run()
+DateFormatingHelperTests.defaultTestSuite.run()
 
-/*-------- Immutable Date Formatters ---------*/
+/*-------- Cached Singleton Date Formatter Helper ---------*/
 
-private protocol DateFormatterType {
-    func string(from date: Date) -> String
-    func date(from string: String) -> Date?
-}
-extension DateFormatter: DateFormatterType { }
+class CachedDateFormatingHelper {
 
-class ImmutableDateFormatterHelper {
-    
-    // MARK: - Formatters
-    
-    private static let numericalDayMonthYearFormatter: DateFormatterType = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "d/M/yyyy"
-        
-        return dateFormatter
-    }()
-    
-    private static let longMonthFormatter: DateFormatterType = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        
-        return dateFormatter
-    }()
-    
-    private static let shortMonthWithTimeFormatter: DateFormatterType = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy @ HH:mm"
-        
-        return dateFormatter
-    }()
-    
-    // MARK: - User
-    
-    static func string(forDOB date: Date) -> String {
-        let formatter = numericalDayMonthYearFormatter
-        return formatter.string(from: date)
-    }
-    
-    static func string(forAccountCreationDate date: Date) -> String {
-        let formatter = numericalDayMonthYearFormatter
-        return formatter.string(from: date)
-    }
-    
-    // MARK: - Post
-    
-    static func string(forPostedDate date: Date) -> String {
-        let formatter = longMonthFormatter
-        return formatter.string(from: date)
-    }
-    
-    // MARK: - Comment
-    
-    static func string(forCommentedDate date: Date) -> String {
-        let formatter = shortMonthWithTimeFormatter
-        return formatter.string(from: date)
-    }
-}
+    // MARK: - Shared
 
-class ImmutableDateFormatterHelperTests: XCTestCase {
-    
-    func test_forDOB_converted() {
-        let date = Date.dateFrom(year: 1998, month: 8, day: 23)!
-        let formattedDate = DateFormatterHelper.string(forDOB: date)
-        
-        XCTAssertEqual(formattedDate, "23/8/1998")
-    }
-    
-    func test_forAccountCreationDate_converted() {
-        let date = Date.dateFrom(year: 2017, month: 11, day: 3)!
-        let formattedDate = DateFormatterHelper.string(forAccountCreationDate: date)
-        
-        XCTAssertEqual(formattedDate, "3/11/2017")
-    }
-    
-    func test_forPostedDate_converted() {
-        let date = Date.dateFrom(year: 2018, month: 8, day: 18)!
-        let formattedDate = DateFormatterHelper.string(forPostedDate: date)
-        
-        XCTAssertEqual(formattedDate, "Aug 18, 2018")
-    }
-    
-    func test_forCommentedDate_converted() {
-        let date = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
-        let formattedDate = DateFormatterHelper.string(forCommentedDate: date)
-        
-        XCTAssertEqual(formattedDate, "Aug 18, 2018 @ 14:56")
-    }
-}
+    static let shared = CachedDateFormatingHelper()
 
-ImmutableDateFormatterHelperTests.defaultTestSuite.run()
-
-/*-------- Cached Imuutable Date Formatters ---------*/
-
-class ImmutableCachedDateFormatterHelper {
-    
-    private static var cachedDateFormatters = [String : DateFormatterType]()
-    
     // MARK: - Cached Formatters
-    
-    private static func cachedDateFormatter(withFormat format: String) -> DateFormatterType {
+
+    private var cachedDateFormatters = [String : DateFormatterType]()
+
+    private func cachedDateFormatter(withFormat format: String) -> DateFormatterType {
         let key = format
         if let cachedFormatter = cachedDateFormatters[key] {
             return cachedFormatter
         }
-        
+
         let formatter = DateFormatter()
         formatter.dateFormat = format
-        
+
         cachedDateFormatters[key] = formatter
-        
+
         return formatter
     }
-    
-    // MARK: - User
-    
-    static func string(forDOB date: Date) -> String {
-        let formatter = ImmutableCachedDateFormatterHelper.cachedDateFormatter(withFormat: "d/M/yyyy")
-        return formatter.string(from: date)
+
+    // MARK: - DOB
+
+    func formatDOBDate(_ date: Date) -> String {
+        let dateFormatter = cachedDateFormatter(withFormat: "YYYY/MM/dd @ HH:mm")
+        let formattedDate = dateFormatter.string(from: date)
+        return ("Date of birth: \(formattedDate)")
     }
-    
-    static func string(forAccountCreationDate date: Date) -> String {
-        let formatter = ImmutableCachedDateFormatterHelper.cachedDateFormatter(withFormat: "d/M/yyyy")
-        return formatter.string(from: date)
+
+    // MARK: - Account
+
+    func formatLastActiveDate(_ date: Date, now: Date = Date()) -> String {
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!
+
+        var dateFormatter = cachedDateFormatter(withFormat: "dd MMM @ HH:mm")
+        if date > yesterday {
+            dateFormatter = cachedDateFormatter(withFormat: "HH:mm")
+        }
+
+        let formattedDate = dateFormatter.string(from: date)
+        return ("Last active: \(formattedDate)")
     }
-    
+
     // MARK: - Post
-    
-    static func string(forPostedDate date: Date) -> String {
-        let formatter = ImmutableCachedDateFormatterHelper.cachedDateFormatter(withFormat: "MMM d, yyyy")
-        return formatter.string(from: date)
+
+    func formatPostCreatedDate(_ date: Date) -> String {
+        let dateFormatter = cachedDateFormatter(withFormat: "d MMM 'of' yyyy")
+        let formattedDate = dateFormatter.string(from: date)
+        return formattedDate
     }
-    
-    // MARK: - Comment
-    
-    static func string(forCommentedDate date: Date) -> String {
-        let formatter = ImmutableCachedDateFormatterHelper.cachedDateFormatter(withFormat: "MMM d, yyyy @ HH:mm")
-        return formatter.string(from: date)
+
+    // MARK: - Commenting
+
+    func formatCommentedDate(_ date: Date) -> String {
+        let dateFormatter = cachedDateFormatter(withFormat: "d MMM 'of' yyyy")
+        let formattedDate = dateFormatter.string(from: date)
+        return ("Comment posted: \(formattedDate)")
     }
 }
 
-class ImmutableCachedDateFormatterHelperTests: XCTestCase {
+class CachedDateFormatingHelperTests: XCTestCase {
     
-    func test_forDOB_converted() {
-        let date = Date.dateFrom(year: 1998, month: 8, day: 23)!
-        let formattedDate = DateFormatterHelper.string(forDOB: date)
+    func test_formatDOBDate_formatted() {
+        let dob = Date.dateFrom(year: 1992, month: 6, day: 23, hour: 4, minute: 56)!
         
-        XCTAssertEqual(formattedDate, "23/8/1998")
+        let formattedDate = CachedDateFormatingHelper.shared.formatDOBDate(dob)
+        
+        XCTAssertEqual(formattedDate, "Date of birth: 1992/06/23 @ 04:56")
     }
     
-    func test_forAccountCreationDate_converted() {
-        let date = Date.dateFrom(year: 2017, month: 11, day: 3)!
-        let formattedDate = DateFormatterHelper.string(forAccountCreationDate: date)
+    func test_formatLastActivityDate_yesterday() {
+        let now = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
+        let earlierToday = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 9, minute: 28)!
         
-        XCTAssertEqual(formattedDate, "3/11/2017")
+        let formattedDate = DateFormatingHelper.shared.formatLastActiveDate(earlierToday, now: now)
+        
+        XCTAssertEqual(formattedDate, "Last active: 09:28")
     }
     
-    func test_forPostedDate_converted() {
-        let date = Date.dateFrom(year: 2018, month: 8, day: 18)!
-        let formattedDate = DateFormatterHelper.string(forPostedDate: date)
+    func test_formatLastActivityDate_7DaysAgo() {
+        let now = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
+        let sevenDaysAgo = Date.dateFrom(year: 2018, month: 8, day: 11, hour: 9, minute: 28)!
         
-        XCTAssertEqual(formattedDate, "Aug 18, 2018")
+        let formattedDate = DateFormatingHelper.shared.formatLastActiveDate(sevenDaysAgo, now: now)
+        
+        XCTAssertEqual(formattedDate, "Last active: 11 Aug @ 09:28")
     }
     
-    func test_forCommentedDate_converted() {
-        let date = Date.dateFrom(year: 2018, month: 8, day: 18, hour: 14, minute: 56)!
-        let formattedDate = DateFormatterHelper.string(forCommentedDate: date)
+    func test_formatPostCreatedDate_formatted() {
+        let postCreated = Date.dateFrom(year: 1992, month: 6, day: 23, hour: 17, minute: 6)!
         
-        XCTAssertEqual(formattedDate, "Aug 18, 2018 @ 14:56")
+        let formattedDate = DateFormatingHelper.shared.formatPostCreatedDate(postCreated)
+        
+        XCTAssertEqual(formattedDate, "23 Jun of 1992")
+    }
+    
+    func test_formatCommentedDate_formatted() {
+        let commented = Date.dateFrom(year: 2018, month: 11, day: 9, hour: 4, minute: 56)!
+        
+        let formattedDate = DateFormatingHelper.shared.formatCommentedDate(commented)
+        
+        XCTAssertEqual(formattedDate, "Comment posted: 09 Nov @ 04:56")
     }
 }
 
-ImmutableCachedDateFormatterHelperTests.defaultTestSuite.run()
+CachedDateFormatingHelperTests.defaultTestSuite.run()
