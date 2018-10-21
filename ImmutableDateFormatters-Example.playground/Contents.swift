@@ -85,31 +85,44 @@ DateConverterTests.defaultTestSuite.run()
 
 /*-------- Pass-by-reference Vs Pass-by-value ---------*/
 
-struct ExamplePassByValue {
+struct PersonValueTypeExample: CustomStringConvertible {
     var name: String
-}
-
-let exampleA = ExamplePassByValue(name: "Bob")
-var exampleB = exampleA
-exampleB.name = "Samantha"
-
-print("exampleA name: \(exampleA.name)") // prints "exampleA name: Bob"
-print("exampleB name: \(exampleB.name)") // prints "exampleA name: Samantha"
-
-class ExamplePassByReference {
-    var name: String
+    var age: Int
     
-    init(name: String) {
-        self.name = name
+    var description: String {
+        return ("name: \(name), age: \(age)")
     }
 }
 
-let exampleC = ExamplePassByReference(name: "Bob")
-var exampleD = exampleC
-exampleD.name = "Samantha"
+var a = PersonValueTypeExample(name: "Bob", age: 29)
+var b = a
+b.name = "Samantha"
+a.age = 56
 
-print("exampleC name: \(exampleC.name)") // prints "exampleA name: Samantha"
-print("exampleD name: \(exampleD.name)") // prints "exampleA name: Samantha"
+print("a: \(a)") // prints "a name: Bob, age: 56"
+print("b: \(b)") // prints "b name: Samantha, age: 29"
+
+class PersonReferenceTypeExample: CustomStringConvertible {
+    var name: String
+    var age: Int
+    
+    var description: String {
+    return ("name: \(name), age: \(age)")
+    }
+    
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+}
+
+let c = PersonReferenceTypeExample(name: "Bob", age: 29)
+var d = c
+d.name = "Samantha"
+c.age = 56
+
+print("c: \(c)") // prints "c name: Samantha, age: 56"
+print("d: \(d)") // prints "d name: Samantha, age: 56"
 
 /*-------- Singleton Date Formatter Helper ---------*/
 
