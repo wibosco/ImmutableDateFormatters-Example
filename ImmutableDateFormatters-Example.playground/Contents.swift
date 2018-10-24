@@ -94,13 +94,13 @@ struct PersonValueTypeExample: CustomStringConvertible {
     }
 }
 
-var a = PersonValueTypeExample(name: "Bob", age: 29)
+var a = PersonValueTypeExample(name: "Susie", age: 29)
 var b = a
 b.name = "Samantha"
 a.age = 56
 
-print("a: \(a)") // prints "a name: Bob, age: 56"
-print("b: \(b)") // prints "b name: Samantha, age: 29"
+print("a: \(a)") // prints "a: name: Susie, age: 56"
+print("b: \(b)") // prints "b: name: Samantha, age: 29"
 
 class PersonReferenceTypeExample: CustomStringConvertible {
     var name: String
@@ -116,13 +116,13 @@ class PersonReferenceTypeExample: CustomStringConvertible {
     }
 }
 
-let c = PersonReferenceTypeExample(name: "Bob", age: 29)
+let c = PersonReferenceTypeExample(name: "Susie", age: 29)
 var d = c
 d.name = "Samantha"
 c.age = 56
 
-print("c: \(c)") // prints "c name: Samantha, age: 56"
-print("d: \(d)") // prints "d name: Samantha, age: 56"
+print("c: \(c)") // prints "c: name: Samantha, age: 56"
+print("d: \(d)") // prints "d: name: Samantha, age: 56"
 
 /*-------- Singleton Date Formatter Helper ---------*/
 
