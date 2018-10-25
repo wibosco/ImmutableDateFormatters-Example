@@ -1,40 +1,9 @@
-import UIKit
 import XCTest
-
-extension Date {
-    static func randomWithinDaysBeforeToday(_ days: Int) -> Date {
-        let today = Date()
-        let earliest = today.addingTimeInterval(TimeInterval(-days*24*60*60))
-        
-        return Date.random(between: earliest, and: today)
-    }
-    
-    static func random(between initial: Date, and final:Date) -> Date {
-        let interval = final.timeIntervalSince(initial)
-        let randomInterval = TimeInterval(arc4random_uniform(UInt32(interval)))
-        return initial.addingTimeInterval(randomInterval)
-    }
-}
-
-class RandomDateGenerator {
-    
-    static func generate(numberToBeGenerated count: Int) -> [Date] {
-        var dates = [Date]()
-        for _ in 0..<count {
-            let date = Date.randomWithinDaysBeforeToday(5000)
-            dates.append(date)
-        }
-        
-        return dates
-    }
-}
 
 /*-------- Formatter Performance ---------*/
 
 class DateConverter {
-    let dates = RandomDateGenerator.generate(numberToBeGenerated: 100)
-    
-    func convertDateWithUniqueFormatter() {
+    func convertDateWithUniqueFormatter(_ dates: [Date]) {
         for date in dates {
             let formatter = DateFormatter()
             formatter.dateFormat = "YYYY/MM/DD"
@@ -43,7 +12,7 @@ class DateConverter {
         }
     }
     
-    func convertDateWithReusedFormatter() {
+    func convertDateWithReusedFormatter(_ dates: [Date]) {
         let formatter = DateFormatter()
         formatter.dateFormat = "YYYY/MM/DD"
         
@@ -55,6 +24,7 @@ class DateConverter {
 
 class DateConverterTests: XCTestCase {
     var sut: DateConverter!
+    let dates = Array(repeating: Date(), count: 100)
     
     override func setUp() {
         super.setUp()
@@ -69,14 +39,14 @@ class DateConverterTests: XCTestCase {
     func test_convertDateWithUniqueFormatter_performance() {
         
         self.measure {
-            sut.convertDateWithUniqueFormatter()
+            sut.convertDateWithUniqueFormatter(dates)
         }
     }
     
     func test_convertDateWithReusedFormatter_performance() {
         
         self.measure {
-            sut.convertDateWithReusedFormatter()
+            sut.convertDateWithReusedFormatter(dates)
         }
     }
 }
