@@ -261,13 +261,13 @@ class CachedDateFormattingHelper {
             return cachedFormatter
         }
 
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = format
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = format
 
-        cachedDateFormatters[key] = formatter
+        cachedDateFormatters[key] = dateFormatter
 
-        return formatter
+        return dateFormatter
     }
 
     // MARK: - DOB
