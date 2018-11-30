@@ -7,7 +7,7 @@ class DateConverter {
         for date in dates {
             let dateFormatter = DateFormatter()
             dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-            dateFormatter.dateFormat = "yyyy/MM/dd"
+            dateFormatter.dateFormat = "y/MM/dd"
             
             _ = dateFormatter.string(from: date)
         }
@@ -16,7 +16,7 @@ class DateConverter {
     func convertDateWithReusedFormatter(_ dates: [Date]) {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy/MM/dd"
+        dateFormatter.dateFormat = "y/MM/dd"
         
         for date in dates {
             _ = dateFormatter.string(from: date)
@@ -115,7 +115,7 @@ class DateFormattingHelper {
     private let dobDateFormatter: DateFormatterType = {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy/MM/dd @ HH:mm"
+        dateFormatter.dateFormat = "y/MM/dd @ HH:mm"
         
         return dateFormatter
     }()
@@ -139,7 +139,7 @@ class DateFormattingHelper {
     private let dayMonthYearDateFormatter: DateFormatterType = {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "d MMM 'of' yyyy"
+        dateFormatter.dateFormat = "d MMM 'of' y"
         
         return dateFormatter
     }()
@@ -273,7 +273,7 @@ class CachedDateFormattingHelper {
     // MARK: - DOB
 
     func formatDOBDate(_ date: Date) -> String {
-        let dateFormatter = cachedDateFormatter(withFormat: "yyyy/MM/dd @ HH:mm")
+        let dateFormatter = cachedDateFormatter(withFormat: "y/MM/dd @ HH:mm")
         let formattedDate = dateFormatter.string(from: date)
         return ("Date of birth: \(formattedDate)")
     }
@@ -295,7 +295,7 @@ class CachedDateFormattingHelper {
     // MARK: - Post
 
     func formatPostCreatedDate(_ date: Date) -> String {
-        let dateFormatter = cachedDateFormatter(withFormat: "d MMM 'of' yyyy")
+        let dateFormatter = cachedDateFormatter(withFormat: "d MMM 'of' y")
         let formattedDate = dateFormatter.string(from: date)
         return formattedDate
     }
