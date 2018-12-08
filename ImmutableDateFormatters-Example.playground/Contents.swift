@@ -250,24 +250,30 @@ class CachedDateFormattingHelper {
     // MARK: - Shared
 
     static let shared = CachedDateFormattingHelper()
+    
+    // MARK: - Queue
+    
+    let cachedDateFormattersQueue = DispatchQueue(label: "com.boles.date.formatter.queue")
 
     // MARK: - Cached Formatters
 
     private var cachedDateFormatters = [String : DateFormatterType]()
 
     private func cachedDateFormatter(withFormat format: String) -> DateFormatterType {
-        let key = format
-        if let cachedFormatter = cachedDateFormatters[key] {
-            return cachedFormatter
+        return cachedDateFormattersQueue.sync {
+            let key = format
+            if let cachedFormatter = cachedDateFormatters[key] {
+                return cachedFormatter
+            }
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter.dateFormat = format
+            
+            cachedDateFormatters[key] = dateFormatter
+            
+            return dateFormatter
         }
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = format
-
-        cachedDateFormatters[key] = dateFormatter
-
-        return dateFormatter
     }
 
     // MARK: - DOB
